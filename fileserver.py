@@ -14,7 +14,7 @@ from urllib.parse import quote,unquote
 app=Flask(__name__)
 flask_bootstrap.Bootstrap(app)
 app.config['JSON_AS_ASCII'] = False
-app.config['SECRET_KEY']='igidgeri8345fggjj238wq546'
+app.config['SECRET_KEY']='igidgdfegdiijvdg'
 app.config['UPLOAD_FOLDER']=r'上传目录'
 app.config['MAX_CONTENT_LENGTH'] = 6*1024 * 1024 * 1024+1024
 app.config['BOOTSTRAP_SERVE_LOCAL'] = True
