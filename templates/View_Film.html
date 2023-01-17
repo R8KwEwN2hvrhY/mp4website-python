@@ -1,0 +1,168 @@
+{% extends "upload.html" %}
+{% block head %}
+<meta content=webkit name=renderer>
+<meta charset="UTF-8">
+<link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet" type="text/css">
+<link href="{{ url_for('static', filename='css/video-js.css') }}" rel="stylesheet" type="text/css">
+<script src="{{ url_for('static', filename='js/video.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/videojs.zh-CN.js') }}"></script>
+<script src="{{ url_for('static', filename='js/videojs-contrib-quality-levels.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/videojs-http-source-selector.min.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div id='video-div' style="margin-left:100px;max-width:720px;float:left;white-space:normal;word-break:break-all;word-wrap:break-word;text-align:left;">
+</div>
+<div id='film_list_div' style="padding-left:40px;float:left;font-size:16px;max-width:500px;max-height:800px;white-space:normal;word-break:break-all;word-wrap:break-word;text-align:left;overflow-y:auto">
+</div>
+
+
+<script>
+    xhr=new XMLHttpRequest();
+    xhr.open("post","/View_Film",false);
+    xhr.send(null);
+    var film_json=JSON.parse(xhr.responseText);
+    var film_list_div="";
+    for (var k in film_json){
+        film_list_div=film_list_div + '<div name="film_list" title="'+film_json[k].title+'" film_file_name="'+k+'">'+film_json[k].title+'</div>'
+    };
+    document.getElementById('film_list_div').innerHTML=film_list_div
+
+
+    document.getElementById('video-div').innerHTML='<video class="video-js vjs-default-skin vjs-big-play-centered" height="450px" id="video" width="720px" webkit-playsinline playsinline>您的浏览器不支持 video 标签。</video> <p id="currentplay" style="font-size:18px;"></p>'
+    var Component = videojs.getComponent('Component');
+    var TitleBar = videojs.extend(Component, {
+    constructor:function(player, options) {
+    Component.apply(this, arguments);
+    if (options.text) {
+      this.updateTextContent(options.text);
+       }
+    },
+    createEl:function() {
+        return videojs.dom.createEl('div', {
+            className:'vjs-title-bar'
+    });
+    },
+    updateTextContent:function(text) {
+    if (typeof text !=='string') {
+      text ='Text Unknown';
+    }
+    videojs.dom.emptyEl(this.el());
+    videojs.dom.appendContent(this.el(), text);
+     }
+    });
+    videojs.registerComponent('TitleBar', TitleBar);
+    var player = videojs('video',{
+        controlBar: {volumePanel: {inline: true}},
+        muted: false,
+        bigPlayButton: true,
+	    controls : true,
+	    loop : false,
+	    language: 'zh-CN',
+	    errorDisplay: false,
+	    playbackRates: [0.5, 1, 1.5, 2,2.5,3],
+	    TitleBar: {'text':''},
+	    httpSourceSelector:{default: 'auto'},
+            }
+            );
+    player.httpSourceSelector();
+
+    var lis = document.getElementsByName("film_list");
+    var vLen = lis.length; // 播放列表的长度
+    var url = [];
+    var curr = 1; // 当前播放的视频
+    function setCookie(name,value)
+    {
+        var Days = 10;
+        var exp = new Date();
+        exp.setTime(exp.getTime() + Days*24*60*60*1000);
+        document.cookie = name + '='+ escape (value) + ';expires=' + exp.toGMTString();
+    }
+    function getCookie(name)
+    {
+        var arr,reg=new RegExp('(^| )'+name+'=([^;]*)(;|$)');
+        if(arr=document.cookie.match(reg))
+            return unescape(arr[2]);
+        else
+            return null;
+    }
+    var currtime=0;
+    var interval =setInterval(function(){
+        if (player.currentTime()!=currtime) {
+            setCookie('video_currentTime',player.currentTime());
+            if (typeof(player.key_name)!="undefined"){
+            setCookie('video_filename',player.key_name);
+            };
+            currtime=player.currentTime();
+            }},10000);
+    for(var i=0;i<lis.length;i++){
+            url[i] = lis[i].getAttribute("value");
+    }
+    for(var i=0;i<lis.length;i++){
+            lis[i].onclick = function(){
+                for(var j=0;j<lis.length;j++){
+                    if(lis[j] == this){
+                        player.key_name=this.getAttribute("film_file_name")
+                        player.src([{type:film_json[player.key_name].filetype,src:"View_Film/"+player.key_name}]);
+                        player.TitleBar.updateTextContent(film_json[player.key_name].title);
+                        var oldTracks = player.remoteTextTracks()
+                        var k = oldTracks.length
+                        while (k--) {
+                          player.removeRemoteTextTrack(oldTracks[k])
+                        }
+                        if (film_json[player.key_name].hasOwnProperty('captions')) {
+                        var zhurl = {
+                          kind: 'subtitles',
+                          label: film_json[player.key_name].captions.Language,    //字幕语言
+                          src: "View_Film/"+film_json[player.key_name].captions.vtt_file,     //url为接口返回字幕地址的地址
+                          default: 'true',
+                        };
+                        player.addRemoteTextTrack(zhurl, true);
+                        player.textTrackSettings.setValues({
+                            backgroundOpacity: '0',
+                        });
+                        player.textTrackSettings.updateDisplay();
+                           };
+                        document.getElementById('currentplay').innerHTML=film_json[player.key_name].title;
+                        this.innerHTML = '正在播放 '+this.innerHTML;//点击后的列表显示
+                        setCookie('video_currentTime',0);
+                        setCookie('video_filename',player.key_name);
+                        player.play();
+                        player.currentTime(0); //试验点击后出现当前播放时间非0的情况
+                        this.style.backgroundColor = '#00FFFF';
+                        curr = j+1;//定位下一播放位置
+                    }else{
+                        lis[j].innerHTML = lis[j].getAttribute("title");//没有点击的列表显示
+                        lis[j].style.backgroundColor = '#FFFFFF';
+                    }
+                }
+        }
+    }
+    window.onload=function(){
+        var video_file_name=getCookie('video_filename')
+        if (video_file_name!=null) {
+        if (film_json.hasOwnProperty(video_file_name)){
+            player.src([{type:film_json[video_file_name].filetype,src:"View_Film/"+video_file_name}]);
+            player.currentTime(getCookie('video_currentTime'));
+            player.TitleBar.updateTextContent(film_json[video_file_name].title);
+            document.getElementById('currentplay').innerHTML=film_json[video_file_name].title;
+            if (film_json[video_file_name].hasOwnProperty('captions')) {
+                        var zhurl = {
+                          kind: 'subtitles',
+                          label: film_json[video_file_name].captions.Language,    //字幕语言
+                          src: "View_Film/"+film_json[video_file_name].captions.vtt_file,     //url为接口返回字幕地址的地址
+                          default: 'true',
+                        };
+                        player.addRemoteTextTrack(zhurl, true);
+                        player.textTrackSettings.setValues({
+                            backgroundOpacity: '0',
+                        });
+                        player.textTrackSettings.updateDisplay();
+                           };
+            };
+            player.play();
+        };
+        };
+</script>
+
+{% endblock %}
