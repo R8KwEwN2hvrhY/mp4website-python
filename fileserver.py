@@ -8,8 +8,6 @@ from wtforms import StringField, SubmitField
 from datetime import datetime
 from wtforms.validators import DataRequired
 
-
-
 app=Flask(__name__)
 flask_bootstrap.Bootstrap(app)
 app.config['JSON_AS_ASCII'] = False
@@ -50,7 +48,6 @@ def allowed_file(filename):             #新增关键词过滤
                 filename_safe=False
                 break
         return filename.split('.')[-1].lower() in ALLOWED_EXTENSIONS and filename_safe
-
 
 def get_uploaddir_info(): #定义一个函数，在需要的路由处调用，返回一个目录下文件信息的字典
     file_info_dict={}
