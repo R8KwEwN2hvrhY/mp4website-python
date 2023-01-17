@@ -112,8 +112,7 @@ def download(filename):
     if request.method=="GET":
         file_path=Path(basedir).joinpath(app.config['UPLOAD_FOLDER']).joinpath(filename)
         if file_path.is_file():
-            #with open(f'{ApachelogDir}\请求文件记录.txt', mode='a+') as f:
-            with open(f'{basedir}\请求文件记录.txt', mode='a+') as f: #临时用，正式用请注释掉并启用上一行
+            with open(f'{basedir}\请求文件记录.txt', mode='a+') as f: #记录文件下载记录
                 f.write(
                     f"文件 {filename} 由{request.remote_addr}于{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}进行下载\n")
             return send_file(str(file_path), as_attachment=True)
@@ -128,7 +127,6 @@ def View_Film():
             y = x.suffix.lower()
             if y in Film_Type:
                 file_mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x.stat().st_mtime))
-                #file_list.append({'title':x.stem,'filename':x.name,'filesize':sizedisplay(x.stat().st_size),'filetime':file_mtime,'filetype':Film_Type.get(y)})
                 file_list_include_Path.append([x, file_mtime]) #创建带Path对象列表，以便后面的数据填充
     file_list_include_Path.sort(key=lambda x:x[1], reverse=True) #按时间进行排序
     for z in file_list_include_Path: #展开，检索相应信息，填充数据
@@ -141,28 +139,17 @@ def View_Film():
                 file_info_dict[z[0].name]['captions']={'Language':zz[1].replace(' ','').replace('\n',''),"vtt_file":vtt.name}
     return render_template('view_film.html',film_json=file_info_dict)
 
-
-
-
 @app.route('/View_Film/<path:path_part>',methods=['GET'])
 def Film_Play(path_part):
     file_path=Path(Video_File_Path).joinpath(path_part)
     if file_path.is_file():
         return send_file(str(file_path), as_attachment=True)
 
-@app.route('/test')
-def test():
-    return 'test'
-
 @app.route('/robots.txt')
 def robots():
     return r"""# robots.txt
 User-agent: *
 Disallow: /"""
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_file(f"{basedir}/favicon.ico",as_attachment=True)
 
 if __name__=="__main__":
     app.run(host="0.0.0.0",port=81,threaded=True)
