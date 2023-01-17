@@ -1,14 +1,13 @@
 #coding=utf8
 from flask import Flask,render_template,request,jsonify,abort,send_from_directory,g,make_response,Response,send_file
-import xml.etree.cElementTree as ET
-import flask_bootstrap,re,os,hashlib,time,sqlite3,collections
+import flask_bootstrap,os,time
 from pathlib import Path
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField,file_required
 from wtforms import StringField, SubmitField
 from datetime import datetime
 from wtforms.validators import DataRequired
-from urllib.parse import quote,unquote
+
 
 
 app=Flask(__name__)
@@ -119,55 +118,30 @@ def download(filename):
                     f"文件 {filename} 由{request.remote_addr}于{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}进行下载\n")
             return send_file(str(file_path), as_attachment=True)
 
-@app.route('/View_Film',methods=['GET','POST'])
+@app.route('/View_Film',methods=['GET'])
 def View_Film():
-    if request.method=='GET':
-        file_info_dict= {} #创建有序字典，以便前端可拿某种方式排序的数据 collections.OrderedDict()
-        file_list_include_Path=[]
-        file_path = Path(Video_File_Path)
-        for x in file_path.iterdir():
-            if x.is_file():
-                y = x.suffix.lower()
-                if y in Film_Type:
-                    file_mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x.stat().st_mtime))
-                    #file_list.append({'title':x.stem,'filename':x.name,'filesize':sizedisplay(x.stat().st_size),'filetime':file_mtime,'filetype':Film_Type.get(y)})
-                    file_list_include_Path.append([x, file_mtime]) #创建带Path对象列表，以便后面的数据填充
-        file_list_include_Path.sort(key=lambda x:x[1], reverse=True) #按时间进行排序
-        for z in file_list_include_Path: #展开，检索相应信息，填充数据
-            file_info_dict[z[0].name]={'title':z[0].stem,'filesize':sizedisplay(z[0].stat().st_size),'filetime':z[0].stat().st_mtime,'filetype':Film_Type.get(z[0].suffix.lower())}
-            vtt=z[0].with_name(f"{z[0].stem}.vtt") #组合替换路径里文件名但扩展名为vtt路径，作为字幕信息判断并填充
-            if vtt.is_file(): #判断是否存在
-                with vtt.open(encoding='utf-8') as e: #打开一个文件流，内容放到content里，以便按行读取
-                    content=e.readlines()
-                if len(zz:=content[2].split(':'))==2: #读取对应行，拿到幕语言信息，并填充
-                    file_info_dict[z[0].name]['captions']={'Language':zz[1].replace(' ','').replace('\n',''),"vtt_file":vtt.name}
+    file_info_dict= {} #创建有序字典，以便前端可拿某种方式排序的数据 collections.OrderedDict()
+    file_list_include_Path=[]
+    file_path = Path(Video_File_Path)
+    for x in file_path.iterdir():
+        if x.is_file():
+            y = x.suffix.lower()
+            if y in Film_Type:
+                file_mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x.stat().st_mtime))
+                #file_list.append({'title':x.stem,'filename':x.name,'filesize':sizedisplay(x.stat().st_size),'filetime':file_mtime,'filetype':Film_Type.get(y)})
+                file_list_include_Path.append([x, file_mtime]) #创建带Path对象列表，以便后面的数据填充
+    file_list_include_Path.sort(key=lambda x:x[1], reverse=True) #按时间进行排序
+    for z in file_list_include_Path: #展开，检索相应信息，填充数据
+        file_info_dict[z[0].name]={'title':z[0].stem,'filesize':sizedisplay(z[0].stat().st_size),'filetime':z[0].stat().st_mtime,'filetype':Film_Type.get(z[0].suffix.lower())}
+        vtt=z[0].with_name(f"{z[0].stem}.vtt") #组合替换路径里文件名但扩展名为vtt路径，作为字幕信息判断并填充
+        if vtt.is_file(): #判断是否存在
+            with vtt.open(encoding='utf-8') as e: #打开一个文件流，内容放到content里，以便按行读取
+                content=e.readlines()
+            if len(zz:=content[2].split(':'))==2: #读取对应行，拿到幕语言信息，并填充
+                file_info_dict[z[0].name]['captions']={'Language':zz[1].replace(' ','').replace('\n',''),"vtt_file":vtt.name}
+    return render_template('view_film.html',film_json=file_info_dict)
 
-        return  render_template('view_film.html')
-    else:
-        file_info_dict = {}  # 创建有序字典，以便前端可拿某种方式排序的数据 collections.OrderedDict()
-        file_list_include_Path = []
-        file_path = Path(Video_File_Path)
-        for x in file_path.iterdir():
-            if x.is_file():
-                y = x.suffix.lower()
-                if y in Film_Type:
-                    file_mtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(x.stat().st_mtime))
-                    # file_list.append({'title':x.stem,'filename':x.name,'filesize':sizedisplay(x.stat().st_size),'filetime':file_mtime,'filetype':Film_Type.get(y)})
-                    file_list_include_Path.append([x, file_mtime])  # 创建带Path对象列表，以便后面的数据填充
-        file_list_include_Path.sort(key=lambda x: x[1], reverse=True)  # 按时间进行排序
-        for z in file_list_include_Path:  # 展开，检索相应信息，填充数据
-            file_info_dict[z[0].name] = {'title': z[0].stem, 'filesize': sizedisplay(z[0].stat().st_size),
-                                         'filetime': z[0].stat().st_mtime,
-                                         'filetype': Film_Type.get(z[0].suffix.lower())}
-            vtt = z[0].with_name(f"{z[0].stem}.vtt")  # 组合替换路径里文件名但扩展名为vtt路径，作为字幕信息判断并填充
-            if vtt.is_file():  # 判断是否存在
-                with vtt.open(encoding='utf-8') as e:  # 打开一个文件流，内容放到content里，以便按行读取
-                    content = e.readlines()
-                if len(zz := content[2].split(':')) == 2:  # 读取对应行，拿到幕语言信息，并填充
-                    file_info_dict[z[0].name]['captions'] = {'Language': zz[1].replace(' ', '').replace('\n', ''),
-                                                             "vtt_file": vtt.name}
 
-        return jsonify(file_info_dict)
 
 
 @app.route('/View_Film/<path:path_part>',methods=['GET'])

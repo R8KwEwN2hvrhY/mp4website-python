@@ -14,21 +14,14 @@
 <div id='video-div' style="margin-left:100px;max-width:720px;float:left;white-space:normal;word-break:break-all;word-wrap:break-word;text-align:left;">
 </div>
 <div id='film_list_div' style="padding-left:40px;float:left;font-size:16px;max-width:500px;max-height:800px;white-space:normal;word-break:break-all;word-wrap:break-word;text-align:left;overflow-y:auto">
+    {% for k,v in film_json.items() %}
+    <div  name="film_list" title="{{v.title}}" film_file_name="{{k}}">{{v.title}}</div>
+    {% endfor %}
 </div>
 
 
 <script>
-    xhr=new XMLHttpRequest();
-    xhr.open("post","/View_Film",false);
-    xhr.send(null);
-    var film_json=JSON.parse(xhr.responseText);
-    var film_list_div="";
-    for (var k in film_json){
-        film_list_div=film_list_div + '<div name="film_list" title="'+film_json[k].title+'" film_file_name="'+k+'">'+film_json[k].title+'</div>'
-    };
-    document.getElementById('film_list_div').innerHTML=film_list_div
-
-
+    var film_json={{film_json|tojson}};
     document.getElementById('video-div').innerHTML='<video class="video-js vjs-default-skin vjs-big-play-centered" height="450px" id="video" width="720px" webkit-playsinline playsinline>您的浏览器不支持 video 标签。</video> <p id="currentplay" style="font-size:18px;"></p>'
     var Component = videojs.getComponent('Component');
     var TitleBar = videojs.extend(Component, {
