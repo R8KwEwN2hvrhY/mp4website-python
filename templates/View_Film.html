@@ -122,7 +122,7 @@
                         setCookie('video_filename',player.key_name);
                         player.play();
                         player.currentTime(0); //试验点击后出现当前播放时间非0的情况
-                        this.style.backgroundColor = '#00FFFF';
+                        this.style.backgroundColor = '#E8FFE8';
                         curr = j+1;//定位下一播放位置
                     }else{
                         lis[j].innerHTML = lis[j].getAttribute("title");//没有点击的列表显示
@@ -132,9 +132,12 @@
         }
     }
     window.onload=function(){
-        var video_file_name=getCookie('video_filename')
+        var video_file_name=getCookie('video_filename');
         if (video_file_name!=null) {
         if (film_json.hasOwnProperty(video_file_name)){
+            eval('var cur_item=document.querySelector('+"'"+'div[film_file_name=' +'"'+video_file_name+'"' +"]')");
+            cur_item.innerHTML='正在播放 '+cur_item.innerHTML;
+            cur_item.style.backgroundColor = '#E8FFE8';
             player.src([{type:film_json[video_file_name].filetype,src:"View_Film/"+video_file_name}]);
             player.currentTime(getCookie('video_currentTime'));
             player.TitleBar.updateTextContent(film_json[video_file_name].title);
@@ -153,6 +156,7 @@
                         player.textTrackSettings.updateDisplay();
                            };
             };
+
             player.play();
         };
         };
