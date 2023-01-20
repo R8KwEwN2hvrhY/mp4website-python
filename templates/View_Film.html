@@ -88,6 +88,12 @@
             setCookie('video_filename',player.key_name);
             };
             currtime=player.currentTime();
+            if (player.qualityLevels().length==0) {
+                document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'none';
+                }
+            else {
+                document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'block';
+                };
             }},10000);
     for(var i=0;i<lis.length;i++){
             url[i] = lis[i].getAttribute("value");
@@ -98,6 +104,7 @@
                     if(lis[j] == this){
                         player.key_name=this.getAttribute("film_file_name")
                         player.src([{type:film_json[player.key_name].filetype,src:"View_Film/"+player.key_name}]);
+
                         player.TitleBar.updateTextContent(film_json[player.key_name].title);
                         var oldTracks = player.remoteTextTracks()
                         var k = oldTracks.length
@@ -121,6 +128,12 @@
                         this.innerHTML = '正在播放 '+this.innerHTML;//点击后的列表显示
                         setCookie('video_currentTime',0);
                         setCookie('video_filename',player.key_name);
+                                    if (player.qualityLevels().length==0) {
+              document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'none';
+               }
+            else {
+              document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'block';
+                }
                         player.play();
                         player.currentTime(0); //试验点击后出现当前播放时间非0的情况
                         this.style.backgroundColor = '#E8FFE8';
