@@ -60,7 +60,14 @@
             );
     player.httpSourceSelector();
     document.getElementsByClassName("vjs-modal-dialog-content")[0].setAttribute('style','color:#000000');
-
+    player.on('playing',function(){
+          if (player.qualityLevels().length==0) {
+                document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'none';
+                }
+          else {
+                document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'block';
+                };
+            });
     var lis = document.getElementsByName("film_list");
     var vLen = lis.length; // 播放列表的长度
     var url = [];
@@ -88,12 +95,6 @@
             setCookie('video_filename',player.key_name);
             };
             currtime=player.currentTime();
-            if (player.qualityLevels().length==0) {
-                document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'none';
-                }
-            else {
-                document.getElementsByClassName("vjs-http-source-selector vjs-menu-button vjs-menu-button-popup vjs-control vjs-button")[0].style.display = 'block';
-                };
             }},10000);
     for(var i=0;i<lis.length;i++){
             url[i] = lis[i].getAttribute("value");
