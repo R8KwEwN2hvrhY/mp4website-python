@@ -1,25 +1,21 @@
 #coding=utf8
-from flask import Flask,render_template,request,jsonify,abort,send_from_directory,g,make_response,Response,send_file
+from flask import Flask,render_template,request,jsonify,send_file
 import flask_bootstrap,os,time
 from pathlib import Path
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField,file_required
-from wtforms import StringField, SubmitField
-from datetime import datetime
-from wtforms.validators import DataRequired
+from wtforms import SubmitField
 
 app=Flask(__name__)
 flask_bootstrap.Bootstrap(app)
-app.config['JSON_AS_ASCII'] = False
-app.config['SECRET_KEY']='igidgdfegdiijvdg'
+app.config['SECRET_KEY']='123456'
 app.config['UPLOAD_FOLDER']=r'上传目录'
 app.config['MAX_CONTENT_LENGTH'] = 6*1024 * 1024 * 1024+1024
 app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 basedir=os.path.abspath((os.path.dirname(__file__)))
-ApachelogDir=r"C:\Apache24\logs"
 ALLOWED_EXTENSIONS = ["doc","docx","pdf","zip","rar","txt","png","jpg","xlsx","gif","xls","exe","ppt","pptx","7z","mp4","avi","iso","torrent","flv","ts","mkv"]
-Video_File_Path= r"D:\视频\WEB视频"
-Film_Type={".mp4":"video/mp4",".ogg":"video/ogg",".webm":"video/webm",".weba":"audio/webm",".mkv":"video/webm",".mpd":"application/dash+xml"}
+Video_File_Path= r"D:\视频\Mp4"
+Film_Type={".mp4":"video/mp4",".ogg":"video/ogg",".webm":"video/webm",".weba":"audio/webm",".mkv":"video/webm",".mpd":"application/dash+xml",".m3u8":"application/x-mpegURL"}
 
 bak_keyword_list=set()
 with open(f'{basedir}\敏感词库.txt',newline='',encoding='utf-8') as e:
@@ -75,7 +71,6 @@ def api_upload():
     save_file_name = upload_object.filename
     if upload_object and allowed_file(upload_object.filename) and (save_file_name not in [x[0] for x in get_uploaddir_info().get('file_list')]):
         upload_object.save(os.path.join(file_save_path, save_file_name))
-        #print(f"文件 {f.filename} 由{request.remote_addr}于{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}进行上传")
         return "<h1>上传文件成功！</h1>"
     else:
         return "<h1>上传失败！可能有同名文件、文件太大、非可上传类型及其它异常情况！</h1>"
@@ -109,14 +104,11 @@ def download(filename):
     if request.method=="GET":
         file_path=Path(basedir).joinpath(app.config['UPLOAD_FOLDER']).joinpath(filename)
         if file_path.is_file():
-            with open(f'{basedir}\请求文件记录.txt', mode='a+') as f: #记录文件下载记录
-                f.write(
-                    f"文件 {filename} 由{request.remote_addr}于{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}进行下载\n")
             return send_file(str(file_path), as_attachment=True)
 
 @app.route('/View_Film',methods=['GET'])
 def View_Film():
-    file_info_dict= {} #创建有序字典，以便前端可拿某种方式排序的数据 collections.OrderedDict()
+    file_info_dict= {}
     file_list_include_Path=[]
     file_path = Path(Video_File_Path)
     for x in file_path.iterdir():
@@ -134,7 +126,9 @@ def View_Film():
                 content=e.readlines()
             if len(zz:=content[2].split(':'))==2: #读取对应行，拿到幕语言信息，并填充
                 file_info_dict[z[0].name]['captions']={'Language':zz[1].replace(' ','').replace('\n',''),"vtt_file":vtt.name}
-    return render_template('view_film.html',film_json=file_info_dict)
+            else:
+                file_info_dict[z[0].name]['captions'] = {'Language':"undefined","vtt_file":vtt.name}
+    return  render_template('view_film.html',film_json=file_info_dict)
 
 @app.route('/View_Film/<path:path_part>',methods=['GET'])
 def Film_Play(path_part):
