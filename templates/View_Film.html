@@ -102,7 +102,6 @@
                         player.play();
                         player.currentTime(0); //试验点击后出现当前播放时间非0的情况
                         this.style.backgroundColor = '#E8FFE8';
-                        curr = j+1;//定位下一播放位置
                     }else{
                         lis[j].innerHTML = lis[j].getAttribute("title");//没有点击的列表显示
                         lis[j].style.backgroundColor = '#FFFFFF';
@@ -134,7 +133,6 @@
                         });
                         player.textTrackSettings.updateDisplay();
                            };
-
             };
             player.play();
         };
